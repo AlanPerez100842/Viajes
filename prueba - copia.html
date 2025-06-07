@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Eventos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for WhatsApp Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Fondo de imagen - Actualizado para un aspecto más vibrante y menos oscuro */
+            background-image: url('https://placehold.co/1920x1080/4A90E2/FFFFFF/png?text=Concierto+Vibrante'); /* Ejemplo de imagen de fondo de eventos más clara */
+            background-size: cover; /* Ajusta la imagen para cubrir todo el elemento */
+            background-repeat: no-repeat; /* Evita que la imagen se repita */
+            background-position: center center; /* Centra la imagen */
+            background-attachment: fixed; /* Mantiene la imagen fija al hacer scroll */
+            background-color: transparent; /* Permite que la imagen de fondo sea visible */
+            position: relative; /* Necesario para el pseudoelemento ::before */
+        }
+
+        /* Capa semitransparente para mejorar la legibilidad del texto - Menos oscura */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2); /* Color oscuro semitransparente, menos opaco */
+            z-index: -1; /* Asegura que esté detrás del contenido */
+        }
+
+        /* Ajusta los fondos de los elementos para que la imagen de fondo sea visible */
+        .bg-gray-100 {
+            background-color: transparent; /* Hace que el fondo principal sea transparente */
+        }
+
+        .bg-white {
+            background-color: rgba(255, 255, 255, 0.9); /* Hace los fondos de las secciones ligeramente transparentes */
+        }
+
+        /* Estilos para el efecto de sombra y burbuja en botones */
+        .btn-primary {
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover {
+            background-color: #2563EB; /* blue-600 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transition: all 0.5s ease-out;
+        }
+        .btn-primary:active::after {
+            transform: scale(100, 100) translate(-50%);
+            opacity: 1;
+            transition: 0s;
+        }
+
+        .btn-yellow {
+            background-color: #FACC15; /* yellow-400 */
+            color: #1E40AF; /* blue-800 */
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-yellow:hover {
+            background-color: #EAB308; /* yellow-500 */
+            transform: scale(1.05);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-yellow:active {
+            transform: scale(1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-yellow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transition: all 0.5s ease-out;
+        }
+        .btn-yellow:active::after {
+            transform: scale(100, 100) translate(-50%);
+            opacity: 1;
+            transition: 0s;
+        }
+        /* Estilos para el modal de mensaje */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Estilos para el botón flotante de WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #25D366; /* Color de WhatsApp */
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Mensaje para el usuario durante la carga -->
+    <div id="loading-screen" class="flex items-center justify-center h-screen">
+        <div class="text-2xl font-semibold">Cargando...</div>
+    </div>
+
+    <!-- Contenedor principal de la aplicación, inicialmente oculto -->
+    <div id="app-container" class="hidden">
+        <header class="bg-white shadow-md">
+            <nav class="container mx-auto px-6 py-3 flex justify-between items-center rounded-b-lg">
+                <h1 class="text-2xl font-bold text-blue-600">Gestor de Eventos</h1>
+                <div>
+                    <!-- Botón de Inicio: Siempre visible para volver a los eventos públicos -->
+                    <button id="home-button" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition mr-2 hidden">Inicio</button>
+                    <!-- Botón de Contacto -->
+                    <button id="contact-button" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2">Contacto</button>
+                    <button id="logout-button" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition hidden">Cerrar Sesión</button>
+                    <button id="login-button" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition hidden">Admin Login</button>
+                </div>
+            </nav>
+        </header>
+
+        <main id="main-content">
+            <!-- Las vistas se cargarán aquí dinámicamente -->
+        </main>
+    </div>
+
+    <!-- Modal para mensajes y confirmaciones -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-lg text-gray-800"></p>
+            <div class="modal-buttons">
+                <button id="modal-cancel-button" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-400 transition hidden">Cancelar</button>
+                <button id="modal-ok-button" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nuevo Modal para Detalles de Reserva Personal -->
+    <div id="booking-details-modal" class="modal">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-2xl font-bold text-center mb-6">Detalles de Reserva</h3>
+            <form id="booking-details-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="booking-full-name">Nombre Completo</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" id="booking-full-name" required />
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="booking-email">Email</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="email" id="booking-email" required />
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="booking-phone">Número de Teléfono</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="tel" id="booking-phone" required />
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2" for="booking-address">Dirección de Envío/Llegada</label>
+                    <textarea class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="booking-address" rows="3" required></textarea>
+                </div>
+
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancel-booking-details" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+                    <button type="submit" class="btn-primary">Continuar al Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nuevo Modal para Simulación de Pago PSE -->
+    <div id="pse-payment-modal" class="modal">
+        <div class="modal-content max-w-md">
+            <h3 class="text-2xl font-bold text-center mb-6">Simulación de Pago PSE</h3>
+            <div id="payment-loading-message" class="text-center text-lg text-blue-600 mb-4 hidden">
+                Procesando pago... <span class="animate-pulse">...</span>
+            </div>
+            <form id="pse-payment-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="pse-bank">Banco</label>
+                    <select class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="pse-bank" required>
+                        <option value="">Selecciona tu banco</option>
+                        <option value="bancolombia">Bancolombia</option>
+                        <option value="davivienda">Davivienda</option>
+                        <option value="banco_bogota">Banco de Bogotá</option>
+                        <option value="bbva">BBVA</option>
+                        <option value="scotiabank">Scotiabank Colpatria</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="pse-account-type">Tipo de Cuenta</label>
+                    <select class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="pse-account-type" required>
+                        <option value="">Selecciona tipo de cuenta</option>
+                        <option value="personal">Persona Natural</option>
+                        <option value="business">Persona Jurídica</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="pse-doc-type">Tipo de Documento</label>
+                    <select class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="pse-doc-type" required>
+                        <option value="">Selecciona tipo de documento</option>
+                        <option value="cc">Cédula de Ciudadanía</option>
+                        <option value="nit">NIT</option>
+                        <option value="ce">Cédula de Extranjería</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2" for="pse-doc-number">Número de Documento</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" id="pse-doc-number" required />
+                </div>
+
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancel-pse-payment" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+                    <button type="submit" id="proceed-to-payment-btn" class="btn-primary">Proceder al Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para ver reservas de un evento específico -->
+    <div id="event-bookings-modal" class="modal">
+        <div class="modal-content max-w-2xl">
+            <h3 class="text-2xl font-bold text-center mb-6" id="event-bookings-title">Reservas para: [Nombre del Evento]</h3>
+            <div id="event-bookings-list" class="max-h-96 overflow-y-auto">
+                <!-- Las reservas se cargarán aquí -->
+                <p id="no-event-bookings-message" class="text-center text-gray-500 py-4 hidden">No hay reservas para este evento.</p>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button id="close-event-bookings-modal" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Secciones de las Vistas (inicialmente ocultas) -->
+    <section id="public-view" class="container mx-auto p-4 md:p-8 max-w-4xl hidden">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-yellow-400 drop-shadow-md">
+                <span class="text-blue-600">Tu Evento</span> <span class="text-red-600">Ideal</span>
+            </h1>
+            <p class="text-lg text-gray-600 mt-2">Tu agencia de servicio completo para eventos, conciertos y partidos.</p>
+        </header>
+        <h2 class="text-2xl font-bold mb-6 text-center">Nuestras Ofertas</h2>
+        <div id="events-list-public" class="space-y-8">
+            <!-- Las tarjetas de eventos se inyectarán aquí -->
+        </div>
+        <p id="no-events-message" class="text-center text-gray-500 mt-8 hidden">No hay eventos disponibles en este momento. ¡Vuelve pronto!</p>
+    </section>
+
+    <section id="login-view" class="flex items-center justify-center py-12 px-4 hidden">
+        <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-xl">
+            <h2 id="login-form-title" class="text-2xl font-bold text-center mb-6">Inicio de Sesión Admin</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2" for="email">Email</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="email" id="email" required />
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2" for="password">Contraseña</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="password" id="password" required />
+                </div>
+                <button type="submit" class="w-full btn-primary">
+                    <span id="login-button-text">Iniciar Sesión</span>
+                </button>
+                <p id="login-error-message" class="text-red-500 text-center mt-4 hidden"></p>
+            </form>
+            <!-- REMOVED: Public signup option -->
+        </div>
+    </section>
+
+    <section id="admin-view" class="container mx-auto p-8 hidden">
+        <h2 class="text-3xl font-bold mb-6">Panel de Administración</h2>
+        <p class="text-gray-600 mb-4">ID de Usuario: <span id="admin-user-id" class="font-mono text-sm bg-gray-200 px-2 py-1 rounded"></span></p>
+        
+        <!-- Formulario para Crear/Editar Eventos -->
+        <div class="bg-white p-8 rounded-lg shadow-lg mb-8">
+            <h3 id="event-form-title" class="text-2xl font-bold mb-6">Crear Nuevo Evento</h3>
+            <form id="event-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="event-id-field" />
+                <input id="event-name" type="text" placeholder="Nombre del Evento" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input id="event-category" type="text" placeholder="Categoría (Ej: Concierto)" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input id="event-location" type="text" placeholder="Lugar y Ciudad" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input id="event-price" type="number" placeholder="Precio (solo números)" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input id="event-total-seats" type="number" placeholder="Total de Cupos" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" required />
+                
+                <!-- Nuevo campo para Tipo de Boleta/Paquete -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2" for="event-ticket-type">Tipo de Boleta/Paquete</label>
+                    <select id="event-ticket-type" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <option value="boleta_sola">Boleta Sola</option>
+                        <option value="con_transporte">Con Transporte</option>
+                    </select>
+                </div>
+
+                <!-- Campos condicionales para "Con Transporte" -->
+                <div id="transport-details-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2" for="event-departure-time">Hora de Salida</label>
+                        <input id="event-departure-time" type="time" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2" for="event-meeting-place">Lugar de Encuentro</label>
+                        <input id="event-meeting-place" type="text" placeholder="Ej: Estación Central" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                </div>
+
+                <!-- Input de tipo file para subir la imagen -->
+                <div class="md:col-span-2">
+                    <label class="block text-gray-700 font-bold mb-2" for="event-image-file">Subir Imagen del Evento (Opcional)</label>
+                    <input id="event-image-file" type="file" accept="image/*" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <img id="event-image-preview" class="mt-2 w-32 h-32 object-cover rounded-md hidden" alt="Previsualización de imagen" />
+                </div>
+
+                <div class="md:col-span-2 flex gap-4">
+                    <button type="submit" id="submit-event-button" class="btn-primary">
+                        Guardar Evento
+                    </button>
+                    <button type="button" id="cancel-edit-button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition hidden">Cancelar Edición</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Nueva sección para crear usuarios admin (solo visible para admin logeado) -->
+        <div class="bg-white p-8 rounded-lg shadow-lg mt-8 mb-8">
+            <h3 class="text-2xl font-bold mb-6">Crear Nuevo Usuario Administrador</h3>
+            <form id="create-admin-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2" for="new-admin-email">Email</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="email" id="new-admin-email" required />
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2" for="new-admin-password">Contraseña</label>
+                    <input class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="password" id="new-admin-password" required />
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" id="create-admin-button" class="btn-primary">
+                        Crear Administrador
+                    </button>
+                </div>
+                <p id="create-admin-error-message" class="text-red-500 text-center mt-4 hidden md:col-span-2"></p>
+            </form>
+        </div>
+
+        <!-- Nueva sección para Configuración de la Aplicación -->
+        <div class="bg-white p-8 rounded-lg shadow-lg mt-8 mb-8">
+            <h3 class="text-2xl font-bold mb-6">Configuración de la Aplicación</h3>
+            <form id="app-config-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <h4 class="text-xl font-semibold mb-4">WhatsApp</h4>
+                    <label class="block text-gray-700 font-bold mb-2" for="whatsapp-number">Número de WhatsApp (ej: 573001234567)</label>
+                    <input type="tel" id="whatsapp-number" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Número con código de país" />
+                </div>
+
+                <div class="md:col-span-2 mt-6">
+                    <h4 class="text-xl font-semibold mb-4">Configuración de Pago PSE</h4>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="config-pse-bank">Banco</label>
+                        <input type="text" id="config-pse-bank" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nombre del Banco" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="config-pse-account-type">Tipo de Cuenta</label>
+                        <select id="config-pse-account-type" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Selecciona</option>
+                            <option value="ahorros">Ahorros</option>
+                            <option value="corriente">Corriente</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="config-pse-doc-type">Tipo de Documento</label>
+                        <select id="config-pse-doc-type" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Selecciona</option>
+                            <option value="cc">Cédula de Ciudadanía</option>
+                            <option value="nit">NIT</option>
+                            <option value="ce">Cédula de Extranjería</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="config-pse-doc-number">Número de Documento</label>
+                        <input type="text" id="config-pse-doc-number" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Número de Documento" />
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <button type="submit" id="save-app-config-button" class="btn-primary">
+                        Guardar Configuración
+                    </button>
+                    <p id="app-config-message" class="text-green-600 mt-2 hidden">Configuración guardada.</p>
+                    <p id="app-config-error-message" class="text-red-500 mt-2 hidden"></p>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Nueva sección para Gestión de Reservas -->
+        <div class="mt-12">
+            <h3 class="text-2xl font-bold mb-4">Gestión de Reservas</h3>
+            <div id="bookings-overview-list" class="bg-white p-4 rounded-lg shadow-lg">
+                <!-- Resumen de reservas por evento se inyectará aquí -->
+                <p id="no-overall-bookings-message" class="text-center text-gray-500 py-4 hidden">No hay reservas registradas en este momento.</p>
+            </div>
+        </div>
+
+        <!-- Lista de Eventos Existentes (ya existía) -->
+        <div class="mt-12">
+            <h3 class="text-2xl font-bold mb-4">Eventos Actuales</h3>
+            <div id="events-list-admin" class="bg-white p-4 rounded-lg shadow-lg">
+                <!-- Los eventos de administración se inyectarán aquí -->
+                <p id="no-admin-events-message" class="text-center text-gray-500 py-4 hidden">No hay eventos administrados en este momento.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Botón flotante de WhatsApp -->
+    <a href="https://wa.me/XXXXXXXXXXX" target="_blank" class="whatsapp-float" id="whatsapp-float-button">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            signInAnonymously,
+            signInWithCustomToken
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            onSnapshot,
+            addDoc,
+            doc,
+            updateDoc,
+            deleteDoc,
+            query,
+            runTransaction,
+            getDocs, // Para obtener todas las reservas
+            getDoc, // Para obtener documentos de configuración
+            setDoc // Para guardar documentos de configuración
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- PASO 1: Configuración de Firebase ---
+        // 1. Ve a https://firebase.google.com/ y crea un nuevo proyecto.
+        // 2. En tu proyecto, ve a "Configuración del proyecto" (el ícono de engranaje).
+        // 3. En la sección "Tus apps", haz clic en el ícono web (</>) para registrar una nueva app web.
+        // 4. Copia el objeto `firebaseConfig` que te proporcionan y pégalo aquí.
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+
+        // Variables globales proporcionadas por el entorno de Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfigFromEnv = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicialización de Firebase
+        const app = initializeApp(firebaseConfigFromEnv);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Referencia a la colección de eventos (ajustada para la ruta pública del appId)
+        const eventsCollectionRef = collection(db, `artifacts/${appId}/public/data/events`);
+        // Referencia al documento de configuración de la aplicación
+        const appConfigDocRef = doc(db, `artifacts/${appId}/public/data/app_config/settings`);
+
+
+        // --- Variables de Estado de la Aplicación ---
+        let currentUser = null;
+        let currentView = 'loading'; // 'loading', 'public', 'login', 'admin'
+        let editingEvent = null; // Guarda el evento que se está editando
+        let currentBookingEvent = null; // Almacena el evento para el que se está haciendo una reserva
+        let currentBookingPassengers = 0; // Almacena la cantidad de pasajeros de la reserva actual
+        let currentBookingDetails = {}; // Almacena los datos personales del usuario para la reserva
+        let isAuthReady = false; // Nuevo: Para rastrear si Firebase Auth está listo
+        let eventsListenerAttached = false; // Nuevo: Para asegurar que el listener de eventos se adjunte solo una vez
+
+
+        // --- Referencias a Elementos del DOM ---
+        const loadingScreen = document.getElementById('loading-screen');
+        const appContainer = document.getElementById('app-container');
+        const mainContent = document.getElementById('main-content');
+        const publicView = document.getElementById('public-view');
+        const loginView = document.getElementById('login-view');
+        const adminView = document.getElementById('admin-view');
+
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const homeButton = document.getElementById('home-button'); // Nuevo: Botón de inicio
+        const contactButton = document.getElementById('contact-button'); // Nuevo: Botón de Contacto
+        const whatsappFloatButton = document.getElementById('whatsapp-float-button'); // Botón flotante de WhatsApp
+
+
+        // Login Form elements
+        const loginFormTitle = document.getElementById('login-form-title');
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginButtonText = document.getElementById('login-button-text');
+        const loginErrorMessage = document.getElementById('login-error-message');
+
+        // Public Events elements
+        const eventsListPublic = document.getElementById('events-list-public');
+        const noEventsMessagePublic = document.getElementById('no-events-message');
+
+        // Admin Dashboard elements
+        const adminUserIdSpan = document.getElementById('admin-user-id');
+        const eventFormTitle = document.getElementById('event-form-title');
+        const eventForm = document.getElementById('event-form');
+        const eventIdField = document.getElementById('event-id-field');
+        const eventNameInput = document.getElementById('event-name');
+        const eventCategoryInput = document.getElementById('event-category');
+        const eventLocationInput = document.getElementById('event-location');
+        const eventPriceInput = document.getElementById('event-price');
+        const eventTotalSeatsInput = document.getElementById('event-total-seats'); // Nuevo campo
+        const eventTicketTypeInput = document.getElementById('event-ticket-type'); // Nuevo: Tipo de Boleta/Paquete
+        const eventDepartureTimeInput = document.getElementById('event-departure-time'); // Nuevo: Hora de Salida
+        const eventMeetingPlaceInput = document.getElementById('event-meeting-place'); // Nuevo: Lugar de Encuentro
+        const transportDetailsFields = document.getElementById('transport-details-fields'); // Nuevo: Contenedor de campos de transporte
+        const eventImageInput = document.getElementById('event-image-file'); // CAMBIO: Ahora es un input de tipo file
+        const eventImagePreview = document.getElementById('event-image-preview'); // Nuevo: Elemento para la previsualización
+        const submitEventButton = document.getElementById('submit-event-button');
+        const cancelEditButton = document.getElementById('cancel-edit-button');
+        const eventsListAdmin = document.getElementById('events-list-admin');
+        const noAdminEventsMessage = document.getElementById('no-admin-events-message');
+
+        // New Admin Creation elements
+        const createAdminForm = document.getElementById('create-admin-form');
+        const newAdminEmailInput = document.getElementById('new-admin-email');
+        const newAdminPasswordInput = document.getElementById('new-admin-password');
+        const createAdminButton = document.getElementById('create-admin-button');
+        const createAdminErrorMessage = document.getElementById('create-admin-error-message');
+
+        // App Configuration elements (NUEVOS)
+        const appConfigForm = document.getElementById('app-config-form');
+        const whatsappNumberInput = document.getElementById('whatsapp-number');
+        const configPseBankInput = document.getElementById('config-pse-bank');
+        const configPseAccountTypeSelect = document.getElementById('config-pse-account-type');
+        const configPseDocTypeSelect = document.getElementById('config-pse-doc-type');
+        const configPseDocNumberInput = document.getElementById('config-pse-doc-number');
+        const saveAppConfigButton = document.getElementById('save-app-config-button');
+        const appConfigMessage = document.getElementById('app-config-message');
+        const appConfigErrorMessage = document.getElementById('app-config-error-message');
+
+        // Booking Management elements (NUEVOS)
+        const bookingsOverviewList = document.getElementById('bookings-overview-list');
+        const noOverallBookingsMessage = document.getElementById('no-overall-bookings-message');
+
+        // Message Modal elements
+        const messageModal = document.getElementById('message-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalOkButton = document.getElementById('modal-ok-button');
+        const modalCancelButton = document.getElementById('modal-cancel-button');
+
+        // Booking Details Modal elements (NUEVOS)
+        const bookingDetailsModal = document.getElementById('booking-details-modal');
+        const bookingDetailsForm = document.getElementById('booking-details-form');
+        const bookingFullNameInput = document.getElementById('booking-full-name');
+        const bookingEmailInput = document.getElementById('booking-email');
+        const bookingPhoneInput = document.getElementById('booking-phone');
+        const bookingAddressInput = document.getElementById('booking-address');
+        const cancelBookingDetailsButton = document.getElementById('cancel-booking-details');
+
+        // PSE Payment Modal elements (NUEVOS)
+        const psePaymentModal = document.getElementById('pse-payment-modal');
+        const psePaymentForm = document.getElementById('pse-payment-form');
+        const pseBankSelect = document.getElementById('pse-bank');
+        const pseAccountTypeSelect = document.getElementById('pse-account-type');
+        const pseDocTypeSelect = document.getElementById('pse-doc-type');
+        const pseDocNumberInput = document.getElementById('pse-doc-number');
+        const paymentLoadingMessage = document.getElementById('payment-loading-message');
+        const proceedToPaymentBtn = document.getElementById('proceed-to-payment-btn');
+        const cancelPsePaymentButton = document.getElementById('cancel-pse-payment');
+
+        // Event Bookings Modal elements (NUEVOS)
+        const eventBookingsModal = document.getElementById('event-bookings-modal');
+        const eventBookingsTitle = document.getElementById('event-bookings-title');
+        const eventBookingsList = document.getElementById('event-bookings-list');
+        const noEventBookingsMessage = document.getElementById('no-event-bookings-message');
+        const closeEventBookingsModal = document.getElementById('close-event-bookings-modal');
+
+
+        // --- Funciones de Utilidad ---
+
+        /**
+         * Muestra un modal de mensaje o confirmación.
+         * @param {string} message - El mensaje a mostrar.
+         * @param {boolean} isConfirm - Si es true, muestra un botón "Cancelar" para confirmación.
+         * @returns {Promise<boolean>} Resuelve a true si se acepta, false si se cancela.
+         */
+        function showMessageModal(message, isConfirm = false) {
+            return new Promise((resolve) => {
+                modalMessage.textContent = message;
+                modalCancelButton.classList.toggle('hidden', !isConfirm); // Toggle visibility for cancel button
+                messageModal.style.display = 'flex'; // Usar flex para centrar
+
+                const handleOk = () => {
+                    messageModal.style.display = 'none';
+                    modalOkButton.removeEventListener('click', handleOk);
+                    modalCancelButton.removeEventListener('click', handleCancel);
+                    resolve(true);
+                };
+
+                const handleCancel = () => {
+                    messageModal.style.display = 'none';
+                    modalOkButton.removeEventListener('click', handleOk);
+                    modalCancelButton.removeEventListener('click', handleCancel);
+                    resolve(false);
+                };
+
+                modalOkButton.addEventListener('click', handleOk);
+                modalCancelButton.addEventListener('click', handleCancel);
+            });
+        }
+
+        /**
+         * Limpia el formulario de eventos.
+         */
+        function clearEventForm() {
+            eventNameInput.value = '';
+            eventCategoryInput.value = '';
+            eventLocationInput.value = '';
+            eventPriceInput.value = '';
+            eventTotalSeatsInput.value = ''; // Limpiar nuevo campo
+            eventTicketTypeInput.value = 'boleta_sola'; // Reiniciar a valor por defecto
+            eventDepartureTimeInput.value = ''; // Limpiar nuevo campo
+            eventMeetingPlaceInput.value = ''; // Limpiar nuevo campo
+            eventImageInput.value = ''; // Limpiar el input de tipo file
+            eventImagePreview.src = ''; // Limpiar la previsualización
+            eventImagePreview.classList.add('hidden'); // Ocultar la previsualización
+            eventIdField.value = ''; // Limpiar el ID oculto
+            editingEvent = null;
+            eventFormTitle.textContent = 'Crear Nuevo Evento';
+            submitEventButton.textContent = 'Crear Evento';
+            cancelEditButton.classList.add('hidden');
+            toggleTransportFields(); // Asegurar que los campos de transporte se oculten
+        }
+
+        /**
+         * Limpia el formulario de creación de administrador.
+         */
+        function clearCreateAdminForm() {
+            newAdminEmailInput.value = '';
+            newAdminPasswordInput.value = '';
+            createAdminErrorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Renderiza la vista actual de la aplicación.
+         */
+        function renderView() {
+            // Ocultar todas las vistas primero
+            publicView.classList.add('hidden');
+            loginView.classList.add('hidden');
+            adminView.classList.add('hidden');
+            loginButton.classList.add('hidden');
+            logoutButton.classList.add('hidden');
+            homeButton.classList.add('hidden'); // Ocultar el botón de inicio por defecto
+            contactButton.classList.remove('hidden'); // Siempre mostrar el botón de contacto
+
+            if (currentView === 'loading') {
+                loadingScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            } else {
+                loadingScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+
+                if (currentView === 'public') {
+                    publicView.classList.remove('hidden');
+                    loginButton.classList.remove('hidden'); // Mostrar botón de login en vista pública
+                } else if (currentView === 'login') {
+                    loginView.classList.remove('hidden');
+                    homeButton.classList.remove('hidden'); // Mostrar botón de inicio en vista de login
+                } else if (currentView === 'admin') {
+                    adminView.classList.remove('hidden');
+                    logoutButton.classList.remove('hidden');
+                    homeButton.classList.remove('hidden'); // Mostrar botón de inicio en vista de admin
+                    adminUserIdSpan.textContent = currentUser.uid;
+                    // Cargar y mostrar la configuración de la aplicación al entrar al admin
+                    loadAppConfig();
+                    // Cargar y mostrar todas las reservas
+                    loadAllBookingsOverview();
+                }
+            }
+        }
+
+        /**
+         * Función para alternar la visibilidad de los campos de transporte.
+         */
+        function toggleTransportFields() {
+            if (eventTicketTypeInput.value === 'con_transporte') {
+                transportDetailsFields.classList.remove('hidden');
+                eventDepartureTimeInput.setAttribute('required', 'true');
+                eventMeetingPlaceInput.setAttribute('required', 'true');
+            } else {
+                transportDetailsFields.classList.add('hidden');
+                eventDepartureTimeInput.removeAttribute('required');
+                eventMeetingPlaceInput.removeAttribute('required');
+                eventDepartureTimeInput.value = ''; // Limpiar campos si no son necesarios
+                eventMeetingPlaceInput.value = ''; // Limpiar campos si no son necesarios
+            }
+        }
+
+        /**
+         * Carga la configuración de la aplicación desde Firestore y la muestra en el formulario.
+         */
+        async function loadAppConfig() {
+            try {
+                const docSnap = await getDoc(appConfigDocRef);
+                if (docSnap.exists()) {
+                    const config = docSnap.data();
+                    whatsappNumberInput.value = config.whatsappNumber || '';
+                    configPseBankInput.value = config.pseBankName || '';
+                    configPseAccountTypeSelect.value = config.pseAccountType || '';
+                    configPseDocTypeSelect.value = config.pseDocType || '';
+                    configPseDocNumberInput.value = config.pseDocNumber || '';
+
+                    // Actualizar el href del botón de WhatsApp flotante
+                    if (config.whatsappNumber) {
+                        whatsappFloatButton.href = `https://wa.me/${config.whatsappNumber}`;
+                        whatsappFloatButton.classList.remove('hidden');
+                    } else {
+                        whatsappFloatButton.href = '#';
+                        whatsappFloatButton.classList.add('hidden');
+                    }
+                } else {
+                    // Si no hay configuración, ocultar el botón de WhatsApp por defecto
+                    whatsappFloatButton.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("Error al cargar la configuración de la aplicación: ", error);
+                appConfigErrorMessage.textContent = "Error al cargar la configuración.";
+                appConfigErrorMessage.classList.remove('hidden');
+            }
+        }
+
+
+        /**
+         * Carga y muestra todas las reservas en el panel de administración.
+         * Esto recorrerá todas las colecciones de eventos y luego sus subcolecciones de reservas.
+         */
+        async function loadAllBookingsOverview() {
+            bookingsOverviewList.innerHTML = '';
+            noOverallBookingsMessage.classList.add('hidden');
+            const eventsSnapshot = await getDocs(eventsCollectionRef);
+            let totalBookings = 0;
+
+            if (eventsSnapshot.empty) {
+                noOverallBookingsMessage.classList.remove('hidden');
+                return;
+            }
+
+            for (const eventDoc of eventsSnapshot.docs) {
+                const eventId = eventDoc.id;
+                const eventData = eventDoc.data();
+                const bookingsCollection = collection(db, `artifacts/${appId}/public/data/events/${eventId}/bookings`);
+                const bookingsSnapshot = await getDocs(bookingsCollection);
+
+                if (!bookingsSnapshot.empty) {
+                    totalBookings += bookingsSnapshot.docs.length;
+                    const eventBookingsSection = document.createElement('div');
+                    eventBookingsSection.className = 'mb-6 p-4 border rounded-lg bg-gray-50';
+                    eventBookingsSection.innerHTML = `
+                        <h4 class="font-bold text-lg mb-2">Reservas para: ${eventData.name}</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700">
+                            ${bookingsSnapshot.docs.map(bookingDoc => {
+                                const booking = bookingDoc.data();
+                                return `<li>${booking.fullName} (${booking.email}) - ${booking.passengers} pasajero(s)</li>`;
+                            }).join('')}
+                        </ul>
+                        <button class="bg-blue-500 text-white py-1 px-3 rounded-lg hover:bg-blue-600 transition mt-3 view-event-bookings-btn" data-event-id="${eventId}" data-event-name="${eventData.name}">Ver Detalles de Reservas</button>
+                    `;
+                    bookingsOverviewList.appendChild(eventBookingsSection);
+                }
+            }
+
+            if (totalBookings === 0) {
+                noOverallBookingsMessage.classList.remove('hidden');
+            } else {
+                // Attach event listeners for "Ver Detalles de Reservas" buttons
+                bookingsOverviewList.querySelectorAll('.view-event-bookings-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const eventId = e.target.dataset.eventId;
+                        const eventName = e.target.dataset.eventName;
+                        await displayEventBookingsInModal(eventId, eventName);
+                    });
+                });
+            }
+        }
+
+        /**
+         * Muestra las reservas de un evento específico en un modal.
+         * @param {string} eventId - ID del evento.
+         * @param {string} eventName - Nombre del evento.
+         */
+        async function displayEventBookingsInModal(eventId, eventName) {
+            eventBookingsTitle.textContent = `Reservas para: ${eventName}`;
+            eventBookingsList.innerHTML = '';
+            noEventBookingsMessage.classList.add('hidden');
+
+            const bookingsCollection = collection(db, `artifacts/${appId}/public/data/events/${eventId}/bookings`);
+            const bookingsSnapshot = await getDocs(bookingsCollection);
+
+            if (bookingsSnapshot.empty) {
+                noEventBookingsMessage.classList.remove('hidden');
+            } else {
+                bookingsSnapshot.docs.forEach(bookingDoc => {
+                    const booking = bookingDoc.data();
+                    const bookingItemHtml = `
+                        <div class="border-b py-2 mb-2">
+                            <p><span class="font-semibold">Nombre:</span> ${booking.fullName}</p>
+                            <p><span class="font-semibold">Email:</span> ${booking.email}</p>
+                            <p><span class="font-semibold">Teléfono:</span> ${booking.phone}</p>
+                            <p><span class="font-semibold">Dirección:</span> ${booking.address}</p>
+                            <p><span class="font-semibold">Pasajeros:</span> ${booking.passengers}</p>
+                            <p><span class="font-semibold">Fecha Reserva:</span> ${new Date(booking.timestamp).toLocaleString()}</p>
+                            <p><span class="font-semibold">Pago:</span> Banco ${booking.bank} (${booking.accountType}), Doc: ${booking.docType} ${booking.docNumber}</p>
+                        </div>
+                    `;
+                    eventBookingsList.insertAdjacentHTML('beforeend', bookingItemHtml);
+                });
+            }
+            eventBookingsModal.style.display = 'flex';
+        }
+
+
+        /**
+         * Rellena y muestra la lista de eventos en la vista pública.
+         * @param {Array<Object>} events - Lista de objetos de eventos.
+         */
+        function renderPublicEvents(events) {
+            eventsListPublic.innerHTML = ''; // Limpiar la lista existente
+            if (events.length === 0) {
+                noEventsMessagePublic.classList.remove('hidden');
+            } else {
+                noEventsMessagePublic.classList.add('hidden');
+                events.forEach(event => {
+                    const availableSeats = (event.totalSeats || 0) - (event.bookedSeats || 0);
+                    const isAvailable = availableSeats > 0;
+                    const isConTransporte = event.ticketType === 'con_transporte';
+
+                    const eventCardHtml = `
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex mb-8">
+                            <img class="md:w-1/3 h-80 md:h-auto w-full object-cover rounded-l-xl" src="${event.imageUrl || 'https://placehold.co/600x800/cccccc/ffffff?text=Evento'}" alt="${event.name}" onerror="this.onerror=null; this.src='https://placehold.co/600x800/cccccc/ffffff?text=Evento';"/>
+                            <div class="p-8 md:w-2/3 flex flex-col justify-between">
+                                <div>
+                                    <div class="uppercase tracking-wide text-sm text-indigo-600 font-semibold">${event.category}</div>
+                                    <h3 class="block mt-1 text-3xl leading-tight font-bold text-black">${event.name}</h3>
+                                    <p class="mt-2 text-gray-500">${event.location}</p>
+                                    <div class="mt-6">
+                                        <h4 class="font-semibold text-lg">Tu Paquete Completo Incluye:</h4>
+                                        <ul class="mt-2 list-disc list-inside text-gray-700 space-y-2">
+                                            <li><span class="font-semibold">Entrada al Evento:</span> Ubicación General o según paquete.</li>
+                                            <li><span class="font-semibold">Tipo de Boleta:</span> ${event.ticketType === 'con_transporte' ? 'Con Transporte' : 'Boleta Sola'}</li>
+                                            ${isConTransporte ? `
+                                            <li><span class="font-semibold">Transporte Ida y Vuelta:</span></li>
+                                            <ul class="ml-6 list-circle list-inside">
+                                                <li><span class="font-semibold">Hora de Salida:</span> ${event.departureTime || 'No especificada'}</li>
+                                                <li><span class="font-semibold">Lugar de Encuentro:</span> ${event.meetingPlace || 'No especificado'}</li>
+                                            </ul>
+                                            ` : ''}
+                                            <li><span class="font-semibold">Kit de Viajero:</span> Refrigerio, bebida o recordatorio.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="mt-8 text-right">
+                                    <div class="text-3xl font-bold text-gray-900 mb-4">$${new Intl.NumberFormat('es-CO').format(event.price)} COP</div>
+                                    <p class="text-gray-700 text-lg mb-2">Cupos Disponibles: <span class="font-bold ${isAvailable ? 'text-green-600' : 'text-red-600'}">${availableSeats}</span></p>
+                                    
+                                    <div class="flex items-center justify-end gap-2 mb-4">
+                                        <label for="passengers-${event.id}" class="sr-only">Número de Pasajeros</label>
+                                        <input type="number" id="passengers-${event.id}" min="1" value="1" max="${availableSeats}" class="w-20 px-3 py-2 border rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500" ${isAvailable ? '' : 'disabled'} />
+                                        <button class="btn-yellow w-full md:w-auto booking-btn" data-id="${event.id}" ${isAvailable ? '' : 'disabled'}>
+                                            ${isAvailable ? "Reservar Ahora" : "Agotado"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    eventsListPublic.insertAdjacentHTML('beforeend', eventCardHtml);
+                });
+
+                // Add event listeners using event delegation for booking buttons
+                eventsListPublic.querySelectorAll('.booking-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const eventId = e.target.dataset.id;
+                        const passengersInput = document.getElementById(`passengers-${eventId}`);
+                        const numberOfPassengers = parseInt(passengersInput.value);
+
+                        if (isNaN(numberOfPassengers) || numberOfPassengers <= 0) {
+                            showMessageModal('Por favor, ingresa un número válido de pasajeros (al menos 1).');
+                            return;
+                        }
+
+                        const currentEvent = events.find(ev => ev.id === eventId);
+                        if (!currentEvent) {
+                            showMessageModal('Error: Evento no encontrado.');
+                            return;
+                        }
+
+                        const availableSeats = (currentEvent.totalSeats || 0) - (currentEvent.bookedSeats || 0);
+
+                        if (numberOfPassengers > availableSeats) {
+                            showMessageModal(`Solo quedan ${availableSeats} cupos. No puedes reservar ${numberOfPassengers} pasajeros.`);
+                            return;
+                        }
+
+                        // Guardar los detalles del evento y la cantidad de pasajeros para el modal de reserva
+                        currentBookingEvent = currentEvent;
+                        currentBookingPassengers = numberOfPassengers;
+
+                        // Mostrar el modal de detalles de reserva
+                        bookingDetailsModal.style.display = 'flex';
+                        // Limpiar campos del modal al abrirlo
+                        bookingFullNameInput.value = '';
+                        bookingEmailInput.value = '';
+                        bookingPhoneInput.value = '';
+                        bookingAddressInput.value = '';
+                    });
+                });
+            }
+        }
+
+        /**
+         * Rellena y muestra la lista de eventos en el panel de administración.
+         * @param {Array<Object>} events - Lista de objetos de eventos.
+         */
+        function renderAdminEvents(events) {
+            eventsListAdmin.innerHTML = ''; // Limpiar la lista existente
+            if (events.length === 0) {
+                noAdminEventsMessage.classList.remove('hidden');
+            } else {
+                noAdminEventsMessage.classList.add('hidden');
+                events.forEach(async event => { // Note: using async here for nested query
+                    const availableSeats = (event.totalSeats || 0) - (event.bookedSeats || 0);
+                    const eventRow = document.createElement('div');
+                    eventRow.className = 'flex items-center justify-between border-b py-3';
+
+                    // Fetch bookings count for this event
+                    const bookingsCollection = collection(db, `artifacts/${appId}/public/data/events/${event.id}/bookings`);
+                    const bookingsSnapshot = await getDocs(bookingsCollection);
+                    const bookingCount = bookingsSnapshot.docs.length;
+
+                    eventRow.innerHTML = `
+                        <div>
+                            <p class="font-bold text-lg">${event.name}</p>
+                            <p class="text-sm text-gray-600">${event.location} - $${new Intl.NumberFormat('es-CO').format(event.price)}</p>
+                            <p class="text-sm text-gray-600">Tipo: ${event.ticketType === 'con_transporte' ? 'Con Transporte' : 'Boleta Sola'}</p>
+                            <p class="text-sm text-gray-600">Cupos: ${event.totalSeats || 0} (Reservados: ${event.bookedSeats || 0}, Disponibles: ${availableSeats})</p>
+                            ${event.ticketType === 'con_transporte' ? `<p class="text-xs text-gray-500">Hora: ${event.departureTime || 'N/A'}, Lugar: ${event.meetingPlace || 'N/A'}</p>` : ''}
+                            <p class="text-xs text-gray-500 font-semibold">Reservas totales: ${bookingCount}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="bg-yellow-500 text-white py-1 px-3 rounded-lg hover:bg-yellow-600 transition edit-btn" data-id="${event.id}">Editar</button>
+                            <button class="bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600 transition delete-btn" data-id="${event.id}">Eliminar</button>
+                            <button class="bg-indigo-500 text-white py-1 px-3 rounded-lg hover:bg-indigo-600 transition view-bookings-btn" data-id="${event.id}" data-name="${event.name}">Ver Reservas</button>
+                        </div>
+                    `;
+                    eventsListAdmin.appendChild(eventRow);
+                });
+
+                // Añadir listeners a los botones de editar y eliminar
+                eventsListAdmin.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const eventId = e.target.dataset.id;
+                        const eventToEdit = events.find(event => event.id === eventId);
+                        if (eventToEdit) {
+                            editingEvent = eventToEdit;
+                            eventNameInput.value = editingEvent.name;
+                            eventCategoryInput.value = editingEvent.category;
+                            eventLocationInput.value = editingEvent.location;
+                            eventPriceInput.value = editingEvent.price;
+                            eventTotalSeatsInput.value = editingEvent.totalSeats || ''; // Cargar el total de cupos
+                            eventTicketTypeInput.value = editingEvent.ticketType || 'boleta_sola'; // Cargar tipo de boleta
+                            eventDepartureTimeInput.value = editingEvent.departureTime || ''; // Cargar hora de salida
+                            eventMeetingPlaceInput.value = editingEvent.meetingPlace || ''; // Cargar lugar de encuentro
+                            
+                            // Cargar y mostrar la imagen existente en la previsualización
+                            if (editingEvent.imageUrl) {
+                                eventImagePreview.src = editingEvent.imageUrl;
+                                eventImagePreview.classList.remove('hidden');
+                            } else {
+                                eventImagePreview.src = '';
+                                eventImagePreview.classList.add('hidden');
+                            }
+                            eventImageInput.value = ''; // Limpiar el input de archivo para que el usuario pueda seleccionar uno nuevo
+                            
+                            eventIdField.value = editingEvent.id; // Guarda el ID en el campo oculto
+                            eventFormTitle.textContent = 'Editar Evento';
+                            submitEventButton.textContent = 'Actualizar Evento';
+                            cancelEditButton.classList.remove('hidden');
+                            toggleTransportFields(); // Ajustar la visibilidad de los campos de transporte
+                            window.scrollTo(0, 0); // Sube al inicio para ver el formulario
+                        }
+                    });
+                });
+
+                eventsListAdmin.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const eventId = e.target.dataset.id;
+                        const confirmDelete = await showMessageModal('¿Estás seguro de que quieres eliminar este evento?', true);
+                        if (confirmDelete) {
+                            try {
+                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/events`, eventId));
+                                showMessageModal('Evento eliminado con éxito.');
+                            } catch (error) {
+                                console.error("Error al eliminar evento: ", error);
+                                showMessageModal('Hubo un error al eliminar el evento.');
+                            }
+                        }
+                    });
+                });
+
+                // Add listeners for "Ver Reservas" buttons in admin view
+                eventsListAdmin.querySelectorAll('.view-bookings-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const eventId = e.target.dataset.id;
+                        const eventName = e.target.dataset.name;
+                        await displayEventBookingsInModal(eventId, eventName);
+                    });
+                });
+            }
+        }
+
+        /**
+         * Simula una transacción de pago PSE.
+         * @param {Object} paymentData - Datos del formulario de pago PSE.
+         * @param {Object} bookingDetails - Detalles personales del usuario.
+         * @param {Object} event - Detalles del evento.
+         * @param {number} passengers - Número de pasajeros a reservar.
+         */
+        async function simulatePsePayment(paymentData, bookingDetails, event, passengers) {
+            paymentLoadingMessage.classList.remove('hidden');
+            psePaymentForm.style.display = 'none'; // Ocultar el formulario durante el procesamiento
+            proceedToPaymentBtn.disabled = true; // Deshabilitar el botón
+
+            // Simular un retraso de 2 segundos para el procesamiento
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const isPaymentSuccessful = Math.random() > 0.3; // 70% de éxito, 30% de fallo
+
+            paymentLoadingMessage.classList.add('hidden'); // Ocultar mensaje de carga
+
+            if (isPaymentSuccessful) {
+                try {
+                    const eventDocRef = doc(db, `artifacts/${appId}/public/data/events`, event.id);
+                    
+                    await runTransaction(db, async (transaction) => {
+                        const sfDoc = await transaction.get(eventDocRef);
+                        if (!sfDoc.exists()) {
+                            throw new Error("Document does not exist!");
+                        }
+
+                        const currentBookedSeats = sfDoc.data().bookedSeats || 0;
+                        const currentTotalSeats = sfDoc.data().totalSeats || 0;
+                        const newBookedSeats = currentBookedSeats + passengers;
+
+                        if (newBookedSeats > currentTotalSeats) {
+                            throw new Error("Not enough seats available. Please refresh and try again.");
+                        }
+
+                        transaction.update(eventDocRef, { bookedSeats: newBookedSeats });
+
+                        // Añadir la reserva a una subcolección 'bookings'
+                        const bookingsCollectionRef = collection(eventDocRef, 'bookings');
+                        await addDoc(bookingsCollectionRef, {
+                            ...bookingDetails, // Datos personales
+                            bank: paymentData.bank,
+                            accountType: paymentData.accountType,
+                            docType: paymentData.docType,
+                            docNumber: paymentData.docNumber,
+                            passengers: passengers,
+                            timestamp: new Date().toISOString(),
+                            eventId: event.id,
+                            eventName: event.name,
+                            eventPrice: event.price,
+                            status: 'Completado' // Estado del pago
+                        });
+                    });
+                    showMessageModal(`¡Pago y Reserva exitosa! Recibirás un correo con las instrucciones y detalles de tu reserva para el evento "${event.name}".`);
+                    currentView = 'public'; // Volver a la vista pública
+                    renderView();
+                } catch (error) {
+                    console.error("Error al procesar reserva después del pago: ", error);
+                    showMessageModal(`Hubo un error al finalizar tu reserva: ${error.message}. Por favor, contacta con soporte.`);
+                }
+            } else {
+                showMessageModal(`¡Pago fallido! No se pudo procesar tu pago por PSE. Por favor, inténtalo de nuevo o contacta con tu banco.`);
+            }
+            psePaymentModal.style.display = 'none'; // Cerrar modal de PSE
+            proceedToPaymentBtn.disabled = false; // Re-habilitar el botón (en caso de reintento)
+            psePaymentForm.style.display = 'block'; // Mostrar el formulario para posibles reintentos
+        }
+
+
+        // --- Inicialización y Escuchadores de Eventos ---
+
+        // Escuchador de estado de autenticación de Firebase
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (currentUser) {
+                currentView = 'admin';
+                // Si hay un token inicial, iniciar sesión con él
+                if (initialAuthToken && !sessionStorage.getItem('auth_token_used')) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        sessionStorage.setItem('auth_token_used', 'true'); // Marcar como usado
+                        isAuthReady = true; // Auth is ready after successful custom token sign-in
+                    } catch (error) {
+                        console.error("Error signing in with custom token: ", error);
+                        // Fallback a anónimo si custom token falla, pero solo si no se ha intentado ya.
+                        if (!sessionStorage.getItem('anonymous_auth_tried')) {
+                             try {
+                                await signInAnonymously(auth);
+                                sessionStorage.setItem('anonymous_auth_tried', 'true');
+                                isAuthReady = true;
+                             } catch (anonError) {
+                                console.error("Error signing in anonymously after custom token failure: ", anonError);
+                                showMessageModal('No se pudo autenticar. Algunas funcionalidades podrían no estar disponibles.');
+                                isAuthReady = true; // Aún marcar como listo, incluso si la autenticación falló, para proceder con la vista pública
+                             }
+                        } else {
+                            isAuthReady = true; // Si ya se intentó anónimo, simplemente continuar
+                        }
+                    }
+                } else {
+                    isAuthReady = true; // Si no hay token inicial o ya se usó, la autenticación está lista
+                }
+            } else {
+                currentView = 'public';
+                // Intentar inicio de sesión anónimo si no hay usuario y no se ha intentado ya
+                if (!sessionStorage.getItem('anonymous_auth_tried')) {
+                    try {
+                        await signInAnonymously(auth);
+                        sessionStorage.setItem('anonymous_auth_tried', 'true');
+                        isAuthReady = true; // La autenticación está lista después de un inicio de sesión anónimo exitoso
+                    }
+                    catch (error) {
+                        console.error("Error signing in anonymously: ", error);
+                        showMessageModal('No se pudo autenticar anónimamente. Algunas funcionalidades podrían no estar disponibles.');
+                        isAuthReady = true; // Aún marcar como listo, incluso si la autenticación falló, para proceder con la vista pública
+                    }
+                } else {
+                    isAuthReady = true; // Si ya se intentó anónimo, simplemente continuar
+                }
+            }
+            renderView(); // Renderizar la vista inicial una vez que el estado de auth esté listo
+
+            // Adjuntar el escuchador de Firestore SÓLO después de que la autenticación esté confirmada
+            if (isAuthReady && !eventsListenerAttached) {
+                attachEventsListener();
+                eventsListenerAttached = true;
+            }
+        });
+
+        function attachEventsListener() {
+            onSnapshot(eventsCollectionRef, (querySnapshot) => {
+                const eventsData = [];
+                querySnapshot.forEach((doc) => {
+                    eventsData.push({ id: doc.id, ...doc.data() });
+                });
+                renderPublicEvents(eventsData);
+                if (currentUser) { // Solo si está autenticado, renderizar la vista de admin
+                    renderAdminEvents(eventsData);
+                }
+            }, (error) => {
+                console.error("Error al obtener eventos: ", error);
+                showMessageModal('Hubo un error al cargar los eventos. Por favor, inténtalo de nuevo más tarde.');
+            });
+
+            // Listen for app config changes to update WhatsApp button
+            onSnapshot(appConfigDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const config = docSnap.data();
+                    if (config.whatsappNumber) {
+                        whatsappFloatButton.href = `https://wa.me/${config.whatsappNumber}`;
+                        whatsappFloatButton.classList.remove('hidden');
+                    } else {
+                        whatsappFloatButton.href = '#';
+                        whatsappFloatButton.classList.add('hidden');
+                    }
+                } else {
+                    whatsappFloatButton.classList.add('hidden');
+                }
+            }, (error) => {
+                console.error("Error al escuchar cambios en la configuración de la aplicación: ", error);
+            });
+        }
+
+
+        // --- Event Listeners para la Interfaz de Usuario ---
+
+        loginButton.addEventListener('click', () => {
+            currentView = 'login';
+            renderView();
+            // Restablecer el formulario de login (ya no hay signup)
+            emailInput.value = '';
+            passwordInput.value = '';
+            loginErrorMessage.classList.add('hidden');
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                currentUser = null; // Limpiar el usuario actual
+                sessionStorage.removeItem('auth_token_used'); // Permitir que se intente el token de nuevo si se recarga
+                sessionStorage.removeItem('anonymous_auth_tried'); // Restablecer también el flag de anónimo
+                currentView = 'public';
+                renderView();
+                showMessageModal('Sesión cerrada correctamente.');
+            } catch (error) {
+                console.error("Error al cerrar sesión: ", error);
+                showMessageModal('Hubo un error al cerrar sesión.');
+            }
+        });
+
+        homeButton.addEventListener('click', () => { // Nuevo: Event listener para el botón de inicio
+            currentView = 'public';
+            renderView();
+        });
+
+        contactButton.addEventListener('click', () => {
+            // Personaliza este mensaje con tu información de contacto real
+            showMessageModal('Puedes contactarnos para cualquier consulta. ¡Estamos aquí para ayudarte!');
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            loginErrorMessage.classList.add('hidden'); // Ocultar mensaje de error previo
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                currentView = 'admin';
+                renderView();
+                showMessageModal('Inicio de sesión exitoso.');
+            } catch (error) {
+                console.error("Error de autenticación: ", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    loginErrorMessage.textContent = "Email o contraseña incorrectos.";
+                } else {
+                    loginErrorMessage.textContent = `Error: ${error.message}`;
+                }
+                loginErrorMessage.classList.remove('hidden');
+            }
+        });
+
+        eventForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitEventButton.textContent = 'Guardando...';
+            submitEventButton.disabled = true;
+
+            const totalSeats = Number(eventTotalSeatsInput.value);
+            if (isNaN(totalSeats) || totalSeats < 0) {
+                showMessageModal('El número total de cupos debe ser un número positivo.');
+                submitEventButton.disabled = false;
+                return;
+            }
+
+            // Validar campos de transporte si es "Con Transporte"
+            if (eventTicketTypeInput.value === 'con_transporte') {
+                if (!eventDepartureTimeInput.value || !eventMeetingPlaceInput.value) {
+                    showMessageModal('Por favor, ingresa la hora de salida y el lugar de encuentro para paquetes con transporte.');
+                    submitEventButton.disabled = false;
+                    return;
+                }
+            }
+
+
+            // Manejo de la imagen: si hay un archivo seleccionado, simula una subida.
+            let eventImageUrl = '';
+            if (eventImageInput.files && eventImageInput.files[0]) {
+                // En una aplicación real, aquí se subiría el archivo a Firebase Storage
+                // y se obtendría su URL de descarga.
+                // Por ahora, usamos un placeholder para simular la "subida".
+                eventImageUrl = 'https://placehold.co/600x400/4A90E2/FFFFFF?text=Imagen+Subida'; // Color de placeholder acorde al nuevo fondo
+            } else if (editingEvent && editingEvent.imageUrl) {
+                // Si estamos editando y no se seleccionó una nueva imagen,
+                // mantenemos la URL de la imagen existente.
+                eventImageUrl = editingEvent.imageUrl;
+            }
+
+            const eventData = {
+                name: eventNameInput.value,
+                category: eventCategoryInput.value,
+                location: eventLocationInput.value,
+                price: Number(eventPriceInput.value),
+                totalSeats: totalSeats, // Guardar total de cupos
+                ticketType: eventTicketTypeInput.value, // Nuevo: Tipo de boleta/paquete
+                departureTime: eventDepartureTimeInput.value || '', // Hora de Salida (vacío si es boleta sola)
+                meetingPlace: eventMeetingPlaceInput.value || '', // Lugar de Encuentro (vacío si es boleta sola)
+                imageUrl: eventImageUrl // Usar la URL determinada por la lógica anterior
+            };
+
+            try {
+                if (editingEvent) {
+                    // Actualizar evento existente
+                    const eventRef = doc(db, `artifacts/${appId}/public/data/events`, eventIdField.value);
+                    // Solo actualizamos el totalSeats, bookedSeats no se edita directamente
+                    const updateData = { ...eventData };
+                    // If totalSeats is reduced, ensure bookedSeats is not greater than new totalSeats
+                    if (updateData.totalSeats < (editingEvent.bookedSeats || 0)) {
+                         const confirmReduceSeats = await showMessageModal(
+                            `Estás intentando reducir el total de cupos a ${updateData.totalSeats}, pero ya hay ${editingEvent.bookedSeats || 0} reservados. ¿Estás seguro de continuar? Esto podría llevar a una sobre-reserva lógica.`,
+                            true
+                        );
+                        if (!confirmReduceSeats) {
+                            submitEventButton.textContent = 'Actualizar Evento';
+                            submitEventButton.disabled = false;
+                            return;
+                        }
+                    }
+                    await updateDoc(eventRef, updateData);
+                    showMessageModal('Evento actualizado con éxito.');
+                } else {
+                    // Crear nuevo evento - inicializar bookedSeats a 0
+                    const newEventData = { ...eventData, bookedSeats: 0 };
+                    await addDoc(eventsCollectionRef, newEventData);
+                    showMessageModal('Evento creado con éxito.');
+                }
+                clearEventForm(); // Resetea el formulario
+            } catch (error) {
+                console.error("Error al guardar evento: ", error);
+                showMessageModal("Hubo un error al guardar el evento: " + error.message);
+            } finally {
+                submitEventButton.textContent = editingEvent ? 'Actualizar Evento' : 'Crear Evento';
+                submitEventButton.disabled = false;
+            }
+        });
+
+        cancelEditButton.addEventListener('click', () => {
+            clearEventForm();
+        });
+
+        // Event Listener para cambiar la visibilidad de los campos de transporte
+        eventTicketTypeInput.addEventListener('change', toggleTransportFields);
+        
+        // --- Event Listeners para el Modal de Detalles de Reserva Personal ---
+        bookingDetailsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            currentBookingDetails = {
+                fullName: bookingFullNameInput.value,
+                email: bookingEmailInput.value,
+                phone: bookingPhoneInput.value,
+                address: bookingAddressInput.value
+            };
+
+            // Ocultar el modal de detalles de reserva y mostrar el modal de PSE
+            bookingDetailsModal.style.display = 'none';
+            psePaymentModal.style.display = 'flex';
+            // Limpiar los campos del formulario PSE al abrirlo
+            pseBankSelect.value = '';
+            pseAccountTypeSelect.value = '';
+            pseDocTypeSelect.value = '';
+            pseDocNumberInput.value = '';
+        });
+
+        cancelBookingDetailsButton.addEventListener('click', () => {
+            bookingDetailsModal.style.display = 'none';
+        });
+
+        // --- Event Listeners para el Modal de Simulación de Pago PSE ---
+        psePaymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const paymentData = {
+                bank: pseBankSelect.value,
+                accountType: pseAccountTypeSelect.value,
+                docType: pseDocTypeSelect.value,
+                docNumber: pseDocNumberInput.value
+            };
+
+            await simulatePsePayment(
+                paymentData,
+                currentBookingDetails,
+                currentBookingEvent,
+                currentBookingPassengers
+            );
+        });
+
+        cancelPsePaymentButton.addEventListener('click', () => {
+            psePaymentModal.style.display = 'none';
+        });
+
+        // Event listener para la previsualización de la imagen
+        eventImageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    eventImagePreview.src = event.target.result;
+                    eventImagePreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                eventImagePreview.src = '';
+                eventImagePreview.classList.add('hidden');
+            }
+        });
+
+        // Event Listener para el formulario de creación de nuevo administrador
+        createAdminForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            createAdminButton.textContent = 'Creando...';
+            createAdminButton.disabled = true;
+            createAdminErrorMessage.classList.add('hidden');
+
+            const email = newAdminEmailInput.value;
+            const password = newAdminPasswordInput.value;
+
+            try {
+                // Solo un usuario autenticado puede crear nuevos usuarios
+                if (currentUser) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessageModal(`¡Usuario administrador "${email}" creado con éxito!`);
+                    clearCreateAdminForm();
+                } else {
+                    showMessageModal('Debes iniciar sesión como administrador para crear nuevos usuarios.');
+                }
+            } catch (error) {
+                console.error("Error al crear nuevo administrador: ", error);
+                if (error.code === 'auth/email-already-in-use') {
+                    createAdminErrorMessage.textContent = "Este email ya está en uso. Intenta con otro.";
+                } else if (error.code === 'auth/weak-password') {
+                    createAdminErrorMessage.textContent = "La contraseña debe tener al menos 6 caracteres.";
+                } else {
+                    createAdminErrorMessage.textContent = `Error: ${error.message}`;
+                }
+                createAdminErrorMessage.classList.remove('hidden');
+            } finally {
+                createAdminButton.textContent = 'Crear Administrador';
+                createAdminButton.disabled = false;
+            }
+        });
+
+        // Event listener para guardar la configuración de la aplicación
+        appConfigForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            saveAppConfigButton.textContent = 'Guardando...';
+            saveAppConfigButton.disabled = true;
+            appConfigMessage.classList.add('hidden');
+            appConfigErrorMessage.classList.add('hidden');
+
+            const appConfigData = {
+                whatsappNumber: whatsappNumberInput.value,
+                pseBankName: configPseBankInput.value,
+                pseAccountType: configPseAccountTypeSelect.value,
+                pseDocType: configPseDocTypeSelect.value,
+                pseDocNumber: configPseDocNumberInput.value,
+            };
+
+            try {
+                await setDoc(appConfigDocRef, appConfigData);
+                appConfigMessage.textContent = 'Configuración guardada con éxito.';
+                appConfigMessage.classList.remove('hidden');
+            } catch (error) {
+                console.error("Error al guardar la configuración de la aplicación: ", error);
+                appConfigErrorMessage.textContent = `Error: ${error.message}`;
+                appConfigErrorMessage.classList.remove('hidden');
+            } finally {
+                saveAppConfigButton.textContent = 'Guardar Configuración';
+                saveAppConfigButton.disabled = false;
+            }
+        });
+
+        // Event listener para cerrar el modal de reservas del evento
+        closeEventBookingsModal.addEventListener('click', () => {
+            eventBookingsModal.style.display = 'none';
+        });
+
+        // Asegúrate de que los IDs estén definidos en tu entorno.
+        // Si `__app_id` y `__firebase_config` no están definidos globalmente por tu entorno de ejecución,
+        // necesitarás definirlos manualmente aquí para pruebas locales.
+        // Ejemplo:
+        // const __app_id = 'tu-id-de-aplicacion';
+        // const __firebase_config = JSON.stringify({ /* tu config de firebase */ });
+
+    </script>
+</body>
+</html>
